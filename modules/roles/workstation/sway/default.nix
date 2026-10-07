@@ -2,6 +2,7 @@
 {
   imports = [
     ./..
+    ./background.nix
   ];
 
   programs = {

@@ -1,5 +1,9 @@
 { flake-parts-lib, ... }: {
-  imports = [ ./nix.nix ];
+  imports = [
+    ./nix.nix
+    ./maker.nix
+    ./laser-cut.nix
+  ];
 
   options.perSystem = flake-parts-lib.mkPerSystemOption (
     {

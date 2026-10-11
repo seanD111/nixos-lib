@@ -2,7 +2,7 @@
   imports = [
     ./nix.nix
     ./maker.nix
-    ./laser-cut.nix
+    ./lasercut.nix
     ./floorplan.nix
   ];
 

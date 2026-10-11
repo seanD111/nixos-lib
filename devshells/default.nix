@@ -3,6 +3,7 @@
     ./nix.nix
     ./maker.nix
     ./laser-cut.nix
+    ./floorplan.nix
   ];
 
   options.perSystem = flake-parts-lib.mkPerSystemOption (

@@ -1,9 +1,33 @@
 {
-  self,
   inputs,
   lib,
   ...
 }:
+let
+  testsRoot = ./.;
+
+  # Collect one test per directory with a default.nix, mirroring the module
+  # tree: nested directories extend their parent (server, workstation,
+  # workstation-sway, ...).
+  collect =
+    prefix: dir:
+    let
+      entries = builtins.readDir dir;
+      subdirs = lib.filterAttrs (_: type: type == "directory") entries;
+      hasDefault = (entries."default.nix" or null) == "regular";
+      childPrefixes = builtins.mapAttrs (
+        name: _: if prefix == "" then name else "${prefix}-${name}"
+      ) subdirs;
+    in
+    (lib.optionalAttrs hasDefault { ${prefix} = dir + "/default.nix"; })
+    // builtins.foldl' (acc: name: acc // (collect childPrefixes.${name} (dir + "/${name}"))) { } (
+      builtins.attrNames childPrefixes
+    );
+
+  tests = lib.foldl' (acc: name: acc // (collect name (testsRoot + "/${name}"))) { } (
+    builtins.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir testsRoot))
+  );
+in
 {
   perSystem =
     { system, ... }:
@@ -13,33 +37,16 @@
         "aarch64-linux"
       ])
       {
-        checks = {
-          server = inputs.nixpkgs.lib.nixos.runTest {
-            imports = [ ./server.nix ];
+        checks = builtins.mapAttrs (
+          name: path:
+          inputs.nixpkgs.lib.nixos.runTest {
+            imports = [ path ];
+            name = "infra-${name}";
             hostPkgs = inputs.nixpkgs.legacyPackages.${system};
             node.specialArgs = { inherit inputs; };
-            nodes.server.imports = [ self.nixosModules."roles/server" ];
-          };
-
-          workstation = inputs.nixpkgs.lib.nixos.runTest {
-            imports = [ ./workstation.nix ];
-            hostPkgs = inputs.nixpkgs.legacyPackages.${system};
-            node.specialArgs = { inherit inputs; };
-            nodes.workstation.imports = [
-              self.nixosModules."roles/workstation"
-              self.nixosModules."apps/firefox"
-            ];
-          };
-
-          workstation-sway = inputs.nixpkgs.lib.nixos.runTest {
-            imports = [ ./sway.nix ];
-            hostPkgs = inputs.nixpkgs.legacyPackages.${system};
-            node.specialArgs = { inherit inputs; };
-            nodes.workstation.imports = [
-              self.nixosModules."roles/workstation/sway"
-              self.nixosModules."hardware/bluetooth"
-            ];
-          };
-        };
+            defaults.system.stateVersion = "26.05";
+            defaults.users.allowNoPasswordLogin = true;
+          }
+        ) tests;
       };
 }

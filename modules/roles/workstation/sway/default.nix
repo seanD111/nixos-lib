@@ -14,6 +14,14 @@
     waybar.enable = true;
   };
 
+  services.greetd = {
+    enable = true;
+    settings.default_session = {
+      command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --sessions /run/current-system/sw/share/wayland-sessions";
+      user = "greeter";
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     swaylock
     swayidle

@@ -1,6 +1,6 @@
 _: {
   perSystem = { pkgs, ... }: {
-    devshells.laserCut = {
+    devshells.lasercut = {
       packages = with pkgs; [
         # Laser Cutting
         inkscape

@@ -1,34 +1,16 @@
 {
+  self,
   inputs,
   lib,
   ...
 }:
-let
-  testsRoot = ./.;
-
-  # Collect one test per directory with a default.nix, mirroring the module
-  # tree: nested directories extend their parent (server, workstation,
-  # workstation-sway, ...).
-  collect =
-    prefix: dir:
-    let
-      entries = builtins.readDir dir;
-      subdirs = lib.filterAttrs (_: type: type == "directory") entries;
-      hasDefault = (entries."default.nix" or null) == "regular";
-      childPrefixes = builtins.mapAttrs (
-        name: _: if prefix == "" then name else "${prefix}-${name}"
-      ) subdirs;
-    in
-    (lib.optionalAttrs hasDefault { ${prefix} = dir + "/default.nix"; })
-    // builtins.foldl' (acc: name: acc // (collect childPrefixes.${name} (dir + "/${name}"))) { } (
-      builtins.attrNames childPrefixes
-    );
-
-  tests = lib.foldl' (acc: name: acc // (collect name (testsRoot + "/${name}"))) { } (
-    builtins.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir testsRoot))
-  );
-in
 {
+  # Each test file owns the complete scenario: which modules its node imports
+  # (via `self.nixosModules`, the library's public interface) and the
+  # testScript, so a single file is the source of truth for its test. The
+  # runner only supplies plumbing shared by all tests. `self` and `inputs`
+  # reach the test files' node modules through node.specialArgs; the library
+  # modules require them as module arguments.
   perSystem =
     { system, ... }:
     lib.optionalAttrs
@@ -37,16 +19,25 @@ in
         "aarch64-linux"
       ])
       {
-        checks = builtins.mapAttrs (
-          name: path:
-          inputs.nixpkgs.lib.nixos.runTest {
-            imports = [ path ];
-            name = "infra-${name}";
-            hostPkgs = inputs.nixpkgs.legacyPackages.${system};
-            node.specialArgs = { inherit inputs; };
-            defaults.system.stateVersion = "26.05";
-            defaults.users.allowNoPasswordLogin = true;
-          }
-        ) tests;
+        checks =
+          lib.mapAttrs
+            (
+              name: file:
+              inputs.nixpkgs.lib.nixos.runTest {
+                imports = [ file ];
+                name = "infra-${name}";
+                hostPkgs = inputs.nixpkgs.legacyPackages.${system};
+                node.specialArgs = { inherit inputs self; };
+                defaults = {
+                  system.stateVersion = "26.05";
+                  users.allowNoPasswordLogin = true;
+                };
+              }
+            )
+            {
+              server = ./server.nix;
+              workstation = ./workstation.nix;
+              workstation-sway = ./sway.nix;
+            };
       };
 }

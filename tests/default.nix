@@ -38,6 +38,7 @@
               server = ./server.nix;
               workstation = ./workstation.nix;
               workstation-sway = ./sway.nix;
+              workstation-niri = ./niri.nix;
             };
       };
 }

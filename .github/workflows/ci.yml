@@ -59,11 +59,25 @@ jobs:
       - name: Build sway VM test
         run: nix build .#checks.x86_64-linux.workstation-sway -o result-sway
 
+      - name: Build niri VM test
+        run: nix build .#checks.x86_64-linux.workstation-niri -o result-niri
+
       - name: Upload sway test screenshots
         uses: actions/upload-artifact@v4
         with:
           name: sway-test-screenshots
           path: result-sway/*.png
+          if-no-files-found: warn
+
+      - name: Upload niri test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: niri-test-artifacts
+          path: |
+            result-niri/*.png
+            result-niri/niri-screenshot/*.png
+            result-niri/cheatsheet/*.png
+            result-niri/config/*.kdl
           if-no-files-found: warn
 
       - name: Upload workstation test screenshots

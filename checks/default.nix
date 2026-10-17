@@ -69,12 +69,16 @@
           normalFlake ? default
           && normalFlake ? "roles/workstation"
           && normalFlake ? "roles/workstation/sway"
+          && normalFlake ? "roles/workstation/niri"
           && normalFlake ? "roles/server";
         assert rawImport.nixosModules ? default;
         assert
-          partsConsumer.nixosModules ? default && partsConsumer.nixosModules ? "roles/workstation/sway";
+          partsConsumer.nixosModules ? default
+          && partsConsumer.nixosModules ? "roles/workstation/sway"
+          && partsConsumer.nixosModules ? "roles/workstation/niri";
         assert partsManual.checks.x86_64-linux ? lint;
         assert partsManual.checks.x86_64-linux ? workstation-sway;
+        assert partsManual.checks.x86_64-linux ? workstation-niri;
         assert partsManual.devShells.x86_64-linux ? nix;
         assert partsManual.devShells.x86_64-linux ? default;
         assert partsManual.formatter ? x86_64-linux;

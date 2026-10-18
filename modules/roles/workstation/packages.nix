@@ -5,7 +5,6 @@
   };
   environment.systemPackages = with pkgs; [
     bitwarden-cli
-    discord
     gimp
 
     keepassxc
@@ -15,7 +14,6 @@
     signal-desktop
     thunderbird-latest
     remmina
-    restic
     vlc
   ];
 }

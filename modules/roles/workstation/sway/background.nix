@@ -21,7 +21,7 @@ let
     ) config.environment.etc
   );
 
-  swayConfig = builtins.readFile "${config.environment.etc."sway/config".source}";
+  swayConfig = config.environment.etc."sway/config".text;
 
   ltrim =
     s:

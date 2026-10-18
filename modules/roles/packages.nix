@@ -15,6 +15,7 @@
       nebula
       openssl
       qrtool
+      restic
       rsync
       tcpdump
       traceroute

@@ -1,10 +1,12 @@
-# YubiKey support: pcscd, udev rules, PAM challenge-response, GPG agent SSH support.
+# YubiKey support: pcscd, udev rules, FIDO2 PAM auth (pam_u2f).
 #
-# Program the YubiKey for challenge-response on slot 2 and set up the current
-# user for logon:
-#   1) nix-shell -p yubico-pam -p yubikey-manager
-#   2) ykman otp chalresp --touch --generate 2
-#   3) ykpamcfg -2 -v
+# Register each YubiKey once with a fixed origin so the mapping file works on
+# every machine sharing this config (appid defaults to origin):
+#   1) pamu2fcfg -o pam://myorg > u2f_keys        # first key
+#   2) pamu2fcfg -n -o pam://myorg >> u2f_keys    # append additional keys
+# Commit the file, point `apps.yubikey.authfile` at it, and set
+# `apps.yubikey.origin` (and `appid`, if not relying on the default) to the
+# same values used at registration.
 {
   config,
   lib,
@@ -37,32 +39,7 @@ let
 in
 {
   options.apps.yubikey = {
-    enable = lib.mkEnableOption "YubiKey support (pcscd, udev rules, PAM, GPG agent)";
-
-    ids = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      example = [ "30401752" ];
-      description = ''
-        YubiKey token IDs (decimal form) passed to `pam_yubico`.
-
-        Only used with `mode = "client"` (Yubico cloud OTP validation); in
-        `challenge-response` mode authentication relies on the per-user
-        `~/.yubico/challenge-*` files created by `ykpamcfg`.
-      '';
-    };
-
-    mode = lib.mkOption {
-      type = lib.types.enum [
-        "challenge-response"
-        "client"
-      ];
-      default = "challenge-response";
-      description = ''
-        PAM mode: `challenge-response` (offline, slot 2 via `ykpamcfg`) or
-        `client` (online OTP validation against the Yubico API).
-      '';
-    };
+    enable = lib.mkEnableOption "YubiKey support (pcscd, udev rules, PAM FIDO2)";
 
     control = lib.mkOption {
       type = lib.types.enum [
@@ -73,8 +50,53 @@ in
       ];
       default = "sufficient";
       description = ''
-        PAM control flag. Use `required` for multi-factor (password *and*
-        YubiKey); `sufficient` allows the YubiKey to replace the password.
+        PAM control flag for `pam_u2f`. Use `required` for multi-factor
+        (password *and* YubiKey); `sufficient` allows the YubiKey to replace
+        the password.
+      '';
+    };
+
+    authfile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      example = lib.literalExpression "./u2f_keys";
+      description = ''
+        Key mapping file handed to `pam_u2f` (`settings.authfile`). Defaults
+        to the per-user {file}`$XDG_CONFIG_HOME/Yubico/u2f_keys`. Generate one
+        shared file with a fixed `origin` (see module header) and commit it to
+        reuse registrations across machines.
+      '';
+    };
+
+    origin = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "pam://myorg";
+      description = ''
+        FIDO origin passed to `pam_u2f` (`settings.origin`). Defaults to
+        `pam://$HOSTNAME`, which binds each registration to one machine; set
+        the same fixed value used with `pamu2fcfg -o` to share registrations
+        across machines.
+      '';
+    };
+
+    appid = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "pam://myorg";
+      description = ''
+        FIDO application ID passed to `pam_u2f` (`settings.appid`). Defaults
+        to the `origin` value; must match `pamu2fcfg -i` if registration used
+        a distinct one.
+      '';
+    };
+
+    cue = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Prompt the user (`Please touch the device`) instead of waiting
+        silently for the YubiKey.
       '';
     };
 
@@ -135,8 +157,8 @@ in
       with pkgs;
       [
         age-plugin-yubikey
+        pam_u2f
         yubikey-manager
-        yubico-pam
         yubihsm-connector
         # yubihsm-shell #this is broken in 25.11 / nixpkgs-unstable
       ]
@@ -150,15 +172,17 @@ in
       };
     };
 
-    programs.gnupg.agent = {
+    security.pam.u2f = {
       enable = true;
-      enableSSHSupport = true;
-    };
-
-    security.pam.yubico = {
-      enable = true;
-      inherit (cfg) control mode;
-      id = cfg.ids;
+      inherit (cfg) control;
+      settings = {
+        inherit (cfg)
+          authfile
+          origin
+          appid
+          cue
+          ;
+      };
     };
   };
 }

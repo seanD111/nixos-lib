@@ -4,6 +4,7 @@
     ./..
     ../wayland-session.nix
     ./background.nix
+    ./config.nix
   ];
 
   programs.sway = {

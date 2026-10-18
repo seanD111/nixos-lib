@@ -54,13 +54,13 @@ jobs:
           use-flakehub: false
 
       - name: Build workstation VM test
-        run: nix build .#checks.x86_64-linux.workstation -o result-workstation
+        run: nix build .#hydraJobs.x86_64-linux.workstation -o result-workstation
 
       - name: Build sway VM test
-        run: nix build .#checks.x86_64-linux.workstation-sway -o result-sway
+        run: nix build .#hydraJobs.x86_64-linux.workstation-sway -o result-sway
 
       - name: Build niri VM test
-        run: nix build .#checks.x86_64-linux.workstation-niri -o result-niri
+        run: nix build .#hydraJobs.x86_64-linux.workstation-niri -o result-niri
 
       - name: Upload sway test screenshots
         uses: actions/upload-artifact@v4

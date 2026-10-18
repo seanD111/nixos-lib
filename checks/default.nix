@@ -37,9 +37,11 @@
 
       # flake-parts manual usage: a consumer importing individual flakeModules.
       # This consumer must satisfy each module's contract: same-named inputs
-      # (nixpkgs, treefmt-nix, srvos) and a self that provides nixosModules
-      # for the tests module. Our own flake satisfies all of that, so it
-      # stands in for the consumer here.
+      # (nixpkgs, treefmt-nix, srvos) and a self that provides nixosModules.
+      # The NixOS tests module is not exported as a flakeModule; it is
+      # imported here by path, which is the deliberate opt-in a consumer
+      # would perform. Our own flake satisfies all of that, so it stands in
+      # for the consumer here.
       partsManual =
         inputs.flake-parts.lib.mkFlake
           {
@@ -60,7 +62,7 @@
               self.flakeModules.checks
               self.flakeModules.devshells
               self.flakeModules.formatters
-              self.flakeModules.tests
+              ../tests
             ];
           };
 
@@ -77,11 +79,67 @@
           && partsConsumer.nixosModules ? "roles/workstation/sway"
           && partsConsumer.nixosModules ? "roles/workstation/niri";
         assert partsManual.checks.x86_64-linux ? lint;
-        assert partsManual.checks.x86_64-linux ? workstation-sway;
-        assert partsManual.checks.x86_64-linux ? workstation-niri;
+        assert partsManual.hydraJobs.x86_64-linux ? workstation-sway;
+        assert partsManual.hydraJobs.x86_64-linux ? workstation-niri;
+        # the VM tests are opt-in: importing the flakeModules must not add
+        # them to a consumer's checks
+        assert
+          !(partsManual.checks.x86_64-linux ? workstation)
+          && !(partsManual.checks.x86_64-linux ? workstation-sway)
+          && !(partsManual.checks.x86_64-linux ? workstation-niri)
+          && !(partsManual.checks.x86_64-linux ? server);
         assert partsManual.devShells.x86_64-linux ? nix;
         assert partsManual.devShells.x86_64-linux ? default;
         assert partsManual.formatter ? x86_64-linux;
+
+        # Every role must evaluate on the NixOS systems the flake supports;
+        # forcing each system's toplevel derivation path catches packages
+        # that are unavailable or broken on a platform (e.g. discord used to
+        # make the workstation role unevaluatable on aarch64-linux).
+        assert builtins.all (drvPath: drvPath != "") (
+          inputs.nixpkgs.lib.flatten (
+            map
+              (
+                system:
+                map
+                  (
+                    role:
+                    (inputs.nixpkgs.lib.nixosSystem {
+                      inherit system;
+                      modules = [
+                        self.nixosModules.${role}
+                        # minimal machine wiring so toplevel evaluation
+                        # does not trip the boot/fileSystem/password
+                        # assertions
+                        {
+                          fileSystems."/" = {
+                            device = "/dev/disk/by-label/nixos";
+                            fsType = "ext4";
+                          };
+                          boot.loader.grub.devices = [ "/dev/vda" ];
+                          users.allowNoPasswordLogin = true;
+                        }
+                      ];
+                      # the role modules take the consumer's inputs as a
+                      # module argument (e.g. srvos for the server role)
+                      specialArgs.inputs = {
+                        inherit (inputs) nixpkgs srvos;
+                      };
+                    }).config.system.build.toplevel.drvPath
+                  )
+                  [
+                    "roles/server"
+                    "roles/workstation"
+                    "roles/workstation/sway"
+                    "roles/workstation/niri"
+                  ]
+              )
+              [
+                "x86_64-linux"
+                "aarch64-linux"
+              ]
+          )
+        );
         "ok";
     in
     {

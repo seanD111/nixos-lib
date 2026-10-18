@@ -30,11 +30,16 @@
         checks = ./checks;
         devshells = ./devshells;
         formatters = ./formatters;
-        tests = ./tests;
         nixos-modules = {
           flake.nixosModules = library.nixosModules;
         };
       };
+
+      # internal module that publishes the NixOS VM tests under
+      # flake.hydraJobs: activated below, but deliberately not part of
+      # flakeModules, so the tests stay opt-in and are neither built by
+      # `nix flake check` nor merged into consumers' checks
+      nixosTestsModule = ./tests;
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
@@ -46,7 +51,8 @@
       imports = [
         inputs.flake-parts.flakeModules.flakeModules
       ]
-      ++ builtins.attrValues flakeModules;
+      ++ builtins.attrValues flakeModules
+      ++ [ nixosTestsModule ];
       flake.flakeModules = flakeModules // {
         # consumer-safe alias: only the NixOS module wiring
         default = flakeModules.nixos-modules;

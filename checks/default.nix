@@ -112,6 +112,7 @@
                         # does not trip the boot/fileSystem/password
                         # assertions
                         {
+                          system.stateVersion = "26.05";
                           fileSystems."/" = {
                             device = "/dev/disk/by-label/nixos";
                             fsType = "ext4";

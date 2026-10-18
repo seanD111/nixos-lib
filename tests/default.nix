@@ -12,8 +12,9 @@
   # repo's flakeModules do not get them merged into their checks. Run one
   # with e.g. `nix build .#hydraJobs.x86_64-linux.workstation-niri`.
   #
-  # The linux systems the flake supports are covered; the roles are verified
-  # to evaluate on both by the importable check.
+  # The linux systems the flake supports are covered; evaluating the VM test
+  # nodes for both systems is also what keeps the roles' evaluability on
+  # each of them checked during `nix flake check`.
   #
   # Each test file owns the complete scenario: which modules its node
   # imports (via `self.nixosModules`, the library's public interface) and

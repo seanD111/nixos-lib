@@ -5,6 +5,7 @@
     ./..
     ./documentation.nix
     ./networking.nix
+    ./openssh.nix
   ];
 
   time.timeZone = lib.mkForce "UTC";

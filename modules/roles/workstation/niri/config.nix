@@ -67,6 +67,8 @@ in
         Mod+Shift+E { quit; } // Exit niri (asks for confirmation)
         Mod+Shift+Slash { show-hotkey-overlay; } // Show the hotkey overlay
         Super+Alt+L { spawn "swaylock"; } // Lock the screen
+        Mod+N { spawn "makoctl" "dismiss"; } // Dismiss the top notification
+        Mod+Shift+V { spawn-sh "cliphist list | fuzzel -d --prompt 'clipboard> ' | cliphist decode | wl-copy"; } // Paste a clipboard history entry
 
         // Moving around:
         Mod+Left { focus-column-left; } // Focus left
@@ -141,6 +143,15 @@ in
 
     // waybar is started by the user systemd graphical-session.target, so no
     // spawn-at-startup is needed for it here.
+
+    // Session plumbing: screen locking on idle, and the polkit agent for
+    // authentication prompts.
+    spawn-at-startup "swayidle" "-w"
+        "timeout" "600" "swaylock -f -c 000000"
+        "timeout" "900" "niri msg action power-off-monitors"
+        "resume" "niri msg action power-on-monitors"
+        "before-sleep" "swaylock -f -c 000000";
+    spawn-at-startup "lxqt-policykit-agent";
 
     // Drop-in configuration fragments, mirroring sway's include of
     // /etc/sway/config.d.

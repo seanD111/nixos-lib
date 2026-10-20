@@ -8,6 +8,8 @@
 
   services.resolved.enable = true;
 
+  systemd.network.enable = lib.mkDefault true;
+
   systemd.network.networks."90-fallback-dhcp" = {
     matchConfig.Name = "*";
     networkConfig.DHCP = "yes";

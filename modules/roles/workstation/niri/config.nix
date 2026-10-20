@@ -146,11 +146,7 @@ in
 
     // Session plumbing: screen locking on idle, and the polkit agent for
     // authentication prompts.
-    spawn-at-startup "swayidle" "-w"
-        "timeout" "600" "swaylock -f -c 000000"
-        "timeout" "900" "niri msg action power-off-monitors"
-        "resume" "niri msg action power-on-monitors"
-        "before-sleep" "swaylock -f -c 000000";
+    spawn-at-startup "swayidle" "-w" "timeout" "600" "swaylock -f -c 000000" "timeout" "900" "niri msg action power-off-monitors" "resume" "niri msg action power-on-monitors" "before-sleep" "swaylock -f -c 000000";
     spawn-at-startup "lxqt-policykit-agent";
 
     // Drop-in configuration fragments, mirroring sway's include of

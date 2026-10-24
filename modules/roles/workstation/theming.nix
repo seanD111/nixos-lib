@@ -28,11 +28,31 @@ in
   };
 
   # GTK3 apps can't read dconf on Wayland; the XDG fallback file covers them.
-  environment.etc."xdg/gtk-3.0/settings.ini".text = ''
-    [Settings]
-    gtk-theme-name = Adwaita-dark
-    gtk-application-prefer-dark-theme = true
-  '';
+  environment = {
+    etc."xdg/gtk-3.0/settings.ini".text = ''
+      [Settings]
+      gtk-theme-name = Adwaita-dark
+      gtk-application-prefer-dark-theme = true
+    '';
+
+    systemPackages = [ pkgs.fuzzel ];
+
+    # fuzzel has no NixOS module and ships no themes; write the shared palette
+    # directly into its XDG config.
+    etc."xdg/fuzzel/fuzzel.ini".text = ''
+      [colors]
+      background=${colors.bg}ff
+      text=${colors.fg}ff
+      match=${colors.accent}ff
+      selection=${colors.selection-bg}ff
+      selection-text=${colors.fg}ff
+      selection-match=${colors.accent}ff
+      border=${colors.accent}ff
+
+      [border]
+      width=2
+    '';
+  };
 
   qt = {
     enable = true;
@@ -43,25 +63,7 @@ in
   programs.foot = {
     enable = true;
     settings = {
-      main.include = "${pkgs.foot.themes}/share/foot/themes/tokyonight-storm";
+      main.include = [ "${pkgs.foot.themes}/share/foot/themes/tokyonight-storm" ];
     };
   };
-
-  environment.systemPackages = [ pkgs.fuzzel ];
-
-  # fuzzel has no NixOS module and ships no themes; write the shared palette
-  # directly into its XDG config.
-  environment.etc."xdg/fuzzel/fuzzel.ini".text = ''
-    [colors]
-    background=${colors.bg}ff
-    text=${colors.fg}ff
-    match=${colors.accent}ff
-    selection=${colors.selection-bg}ff
-    selection-text=${colors.fg}ff
-    selection-match=${colors.accent}ff
-    border=${colors.accent}ff
-
-    [border]
-    width=2
-  '';
 }

@@ -4,6 +4,7 @@
     variables.EDITOR = "vim";
     defaultPackages = lib.mkForce [ ];
     systemPackages = with pkgs; [
+      age
       b3sum
       ipv6calc
       dnsutils
@@ -17,6 +18,7 @@
       qrtool
       restic
       rsync
+      sops
       tcpdump
       traceroute
       tree

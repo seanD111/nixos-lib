@@ -6,7 +6,6 @@
   # conflict with the getty autologin some tests rely on.
 
   programs = {
-    foot.enable = true;
     waybar.enable = true;
   };
 
@@ -23,7 +22,6 @@
       swaylock
       swayidle
       mako
-      fuzzel
       grim
       slurp
       wl-clipboard
@@ -64,33 +62,4 @@
     # notifications; a plain square means the font is missing.
     nerd-fonts.symbols-only
   ];
-
-  # Dark mode, enforced system-wide: the freedesktop color-scheme drives GTK4
-  # and libadwaita apps (and their window decorations, including the default
-  # title bars niri otherwise shows in white); the legacy GTK3 settings and
-  # Qt platform theme cover older toolkits.
-  programs.dconf = {
-    enable = true;
-    profiles.user.databases = [
-      {
-        settings."org/gnome/desktop/interface" = {
-          color-scheme = "prefer-dark";
-          gtk-theme = "Adwaita-dark";
-          icon-theme = "Adwaita";
-        };
-      }
-    ];
-  };
-
-  qt = {
-    enable = true;
-    platformTheme = "gnome";
-    style = "adwaita-dark";
-  };
-
-  environment.etc."xdg/gtk-3.0/settings.ini".text = ''
-    [Settings]
-    gtk-theme-name = Adwaita-dark
-    gtk-application-prefer-dark-theme = true
-  '';
 }

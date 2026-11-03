@@ -176,13 +176,20 @@ in
       enable = true;
       inherit (cfg) control;
       settings = {
+        # Materialize the authfile into /etc so its store path is rooted by
+        # the system closure; a bare flake-source path in the PAM args is
+        # text-only and can be garbage-collected, silently breaking u2f auth.
+        authfile = if cfg.authfile != null then "/etc/yubikey/u2f_keys" else null;
         inherit (cfg)
-          authfile
           origin
           appid
           cue
           ;
       };
+    };
+
+    environment.etc = lib.mkIf (cfg.authfile != null) {
+      "yubikey/u2f_keys".source = cfg.authfile;
     };
   };
 }

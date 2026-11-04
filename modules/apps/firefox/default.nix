@@ -49,22 +49,31 @@ in
         # "force_installed" and "normal_installed".
         ExtensionSettings = {
           "*".installation_mode = "blocked"; # blocks all addons except the ones specified below
-          # uBlock Origin:
+          # uBlock Origin
+          # To update: find the latest version URL at
+          #   https://addons.mozilla.org/firefox/addon/ublock-origin/versions/ (click "See all versions")
+          # then run:  nix-prefetch-url <the .xpi URL> && nix hash convert --hash-algo sha256 <output>
+          # It prints the sha256 hash; paste the URL and SRI hash below
+          # (prefetch stores the file in /tmp, so the URL stays valid for fetchurl)
           "uBlock0@raymondhill.net" = {
             install_url = "file://${
               pkgs.fetchurl {
-                url = "https://addons.mozilla.org/firefox/downloads/file/5034826/ublock_origin-1.75.0.xpi";
-                hash = "sha256-W3RBWGBFY3BkS9gPFhJehlsObDVrtd/PuEBpln6qUoc=";
+                url = "https://addons.mozilla.org/firefox/downloads/file/5203014/ublock_origin-1.75.4.xpi";
+                hash = "sha256-4t9QPM589QaRMGGMNJaV9ivd2564wYkVbQJyaa5K4mc=";
               }
             }";
             installation_mode = "force_installed";
           };
           # bitwarden
+          # To update: find the latest version URL at
+          #   https://addons.mozilla.org/firefox/addon/bitwarden-password-manager/versions/
+          # then run:  nix-prefetch-url <the .xpi URL> && nix hash convert --hash-algo sha256 <output>
+          # It prints the sha256 hash; paste the URL and SRI hash below
           "{446900e4-71c2-419f-a6a7-df9c091e268b}" = {
             install_url = "file://${
               pkgs.fetchurl {
-                url = "https://addons.mozilla.org/firefox/downloads/file/5037282/bitwarden_password_manager-2026.9.0.xpi";
-                hash = "sha256-Mkotl+NlCS/p2w8AaeTHSMk1hYUjhoNhoyd8G78zmhc=";
+                url = "https://addons.mozilla.org/firefox/downloads/file/5198653/bitwarden_password_manager-2026.10.2.xpi";
+                hash = "sha256-q/nXJz3VWsBYPsxpl/f3rj0p3hHirQpIOLgOK5QdqnM=";
               }
             }";
             installation_mode = "force_installed";

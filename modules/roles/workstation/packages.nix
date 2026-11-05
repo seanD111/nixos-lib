@@ -5,6 +5,7 @@
   };
   environment.systemPackages = with pkgs; [
     age-plugin-yubikey
+    ssh-to-age
     vscodium
     bitwarden-cli
     gimp

@@ -6,6 +6,9 @@
         General = {
           EnableNetworkConfiguration = false; # iwd can hand over to systemd-networkd
         };
+        Rank = {
+          BandModifier5GHz = 2.0;
+        };
         Settings = {
           AutoConnect = true;
         };

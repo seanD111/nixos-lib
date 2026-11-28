@@ -6,14 +6,12 @@
     systemPackages = with pkgs; [
       age
       b3sum
-      ipv6calc
       dnsutils
       curl
       fd
       htop
       jq
       killall
-      nebula
       openssl
       qrtool
       restic
